@@ -9,6 +9,7 @@
     "logs": "firebase functions:log"
   },
   "dependencies": {
+    "@turf/turf": "^5.1.6",
     "firebase-admin": "~5.13.0",
     "firebase-functions": "^2.0.0"
   },
