@@ -23,31 +23,32 @@ exports.fetchNearPeople = functions.https.onRequest((request, response) => {
 
     var arrResult = []
     Object.keys(allData).forEach(function(userId) {
-
-      let userData = allData[userId]
-      Object.keys(userData).forEach(function(deviceId) {
-        if (deviceId != "profile") {
-          let deviceInfo = userData[deviceId]
-          let currentLocation = deviceInfo['currentLocation']
-          if (currentLocation != undefined) {
-            var to = turf.point([currentLocation.latitude, currentLocation.longitude]);
-            var options = {units: 'kilometers'};
-  
-            var distance = turf.distance(myLocation, to, options);
-            console.log('distance:', distance)
-  
-            if (distance <= radius) {
-              let userInfo = {
-                userId: userId,
-                deviceId: deviceId,
-                profile: userData["profile"],
-                currentLocation: currentLocation
-              }    
-              arrResult.push(userInfo);
-            }            
+      if (user_id != userId) {
+        let userData = allData[userId]
+        Object.keys(userData).forEach(function(deviceId) {
+          if (deviceId != "profile") {
+            let deviceInfo = userData[deviceId]
+            let currentLocation = deviceInfo['currentLocation']
+            if (currentLocation != undefined) {
+              var to = turf.point([currentLocation.latitude, currentLocation.longitude]);
+              var options = {units: 'kilometers'};
+    
+              var distance = turf.distance(myLocation, to, options);
+              console.log('distance:', distance)
+    
+              if (distance <= radius) {
+                let userInfo = {
+                  userId: userId,
+                  deviceId: deviceId,
+                  profile: userData["profile"],
+                  currentLocation: currentLocation
+                }    
+                arrResult.push(userInfo);
+              }            
+            }
           }
-        }
-      });
+        });
+      }
     });
 
     response.json({ result: arrResult });
