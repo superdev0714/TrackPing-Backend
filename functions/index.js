@@ -5,14 +5,14 @@ const turf = require('@turf/turf');
 admin.initializeApp();
 
 var db = admin.database();
-var rootRef = db.ref("/users");
+var usersRef = db.ref("/users");
 
 exports.fetchNearPeople = functions.https.onRequest((request, response) => {
   const user_id = request.query.user_id;
   const device_id = request.query.device_id;
   const radius = request.query.radius;
 
-  rootRef.once('value', function(snapshot) {
+  usersRef.once('value', function(snapshot) {
     let allData = snapshot.val();
 
     let current_location = allData[user_id][device_id].currentLocation;
@@ -34,7 +34,6 @@ exports.fetchNearPeople = functions.https.onRequest((request, response) => {
               var options = {units: 'kilometers'};
     
               var distance = turf.distance(myLocation, to, options);
-              console.log('distance:', distance)
     
               if (distance <= radius) {
                 let userInfo = {
