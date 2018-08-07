@@ -5,17 +5,17 @@ const turf = require('@turf/turf');
 admin.initializeApp();
 
 var db = admin.database();
-var usersRef = db.ref("/users");
+var usersRef = db.ref('/users');
 
 exports.fetchNearPeople = functions.https.onRequest((request, response) => {
-  const user_id = request.query.user_id;
-  const device_id = request.query.device_id;
+  const myUserId = request.query.user_id;
+  const myDeviceId = request.query.device_id;
   const radius = request.query.radius;
 
   usersRef.once('value', function(snapshot) {
     let allData = snapshot.val();
 
-    let current_location = allData[user_id][device_id].currentLocation;
+    let current_location = allData[myUserId][myDeviceId].currentLocation;
     
     let myLat = current_location.latitude;
     let myLong = current_location.longitude;
@@ -23,24 +23,33 @@ exports.fetchNearPeople = functions.https.onRequest((request, response) => {
 
     var arrResult = []
     Object.keys(allData).forEach(function(userId) {
-      if (user_id != userId) {
+      if (myUserId != userId) {
         let userData = allData[userId]
         Object.keys(userData).forEach(function(deviceId) {
-          if (deviceId != "profile") {
+          if (deviceId != 'profile' && deviceId != 'followers') {
             let deviceInfo = userData[deviceId]
             let currentLocation = deviceInfo['currentLocation']
             if (currentLocation != undefined) {
               var to = turf.point([currentLocation.latitude, currentLocation.longitude]);
-              var options = {units: 'kilometers'};
+              var options = {units: 'kilometers'}
     
               var distance = turf.distance(myLocation, to, options);
     
               if (distance <= radius) {
+                var isFollowing = null
+                let followers = allData[myUserId]['followers']
+                if (followers) {
+                  Object.keys(followers).forEach(function(followerId) {
+                    if (followerId == userId) {
+                      isFollowing = followers[followerId]
+                    }
+                  });
+                }
+                
                 let userInfo = {
                   userId: userId,
-                  deviceId: deviceId,
-                  profile: userData["profile"],
-                  currentLocation: currentLocation
+                  profile: userData["profile"],                  
+                  isFollowing: isFollowing
                 }    
                 arrResult.push(userInfo);
               }            
