@@ -66,3 +66,49 @@ exports.fetchNearPeople = functions.https.onRequest((request, response) => {
     response.send("The read failed: " + errorObject.code);
   });
 });
+
+exports.sendInviteNotification = functions.https.onRequest((request, response) => {
+  const fromId = request.query.fromId;
+  const toId = request.query.toId;
+
+  var registrationTokens = [];
+
+  usersRef.once('value', function(snapshot) {
+    let allData = snapshot.val();
+
+    let sender = allData[fromId];
+    let receiver = allData[toId];
+    
+    let senderName = sender['profile']['name']
+    
+    var arrResult = []
+    Object.keys(receiver).forEach(function(deviceId) {
+      if (deviceId != 'profile' && deviceId != 'followers') {
+        let deviceInfo = receiver[deviceId]
+        let fcmToken = deviceInfo['fcmToken']
+        registrationTokens.push(fcmToken)
+      }
+    });
+
+    var payload = {
+      notification: {
+        title: '',
+        body: senderName + ' has sent a request to follow you.'
+      },
+      data: {
+        userId: fromId
+      }
+    };
+
+    admin.messaging().sendToDevice(registrationTokens, payload).then(function(res) {
+      console.log('Successfully sent message:', res);
+      response.json({ result: 'success' });
+    }).catch(function(error) {
+      console.log('Error sending message:', error);
+      response.json({ result: 'failed' });
+    });
+  }, function(errorObject) {
+    console.log("The read failed: " + errorObject.code);
+    response.json({ result: "failed" });
+  });
+});
