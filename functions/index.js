@@ -96,7 +96,7 @@ exports.sendInviteNotification = functions.https.onRequest((request, response) =
         body: senderName + ' has sent a request to follow you.'
       },
       data: {
-        userId: fromId
+        title: 'follow request'
       }
     };
 
