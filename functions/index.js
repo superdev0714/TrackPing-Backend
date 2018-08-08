@@ -112,3 +112,41 @@ exports.sendInviteNotification = functions.https.onRequest((request, response) =
     response.json({ result: "failed" });
   });
 });
+
+exports.getFollowingRequests = functions.https.onRequest((request, response) => {
+  const myUserId = request.query.userId
+
+  usersRef.once('value', function(snapshot) {
+    let allData = snapshot.val();
+
+    var arrResult = []
+    Object.keys(allData).forEach(function(userId) {
+      if (myUserId != userId) {
+        let followers = allData[userId]['followers']
+        if (followers != undefined) {
+          Object.keys(followers).forEach(function(followerId) {
+            if (followerId == myUserId) {
+              let profile = allData[userId]['profile']
+              let userName = ''
+              if (profile != undefined) {
+                userName = profile['name']
+              }
+              let follower = {
+                userId: userId,
+                userName: userName,
+                status: followers[followerId]
+              }
+              arrResult.push(follower)
+            }
+          });
+        }
+      }
+    });
+
+    response.json({ result: arrResult });
+    
+  }, function(errorObject) {
+    console.log("The read failed: " + errorObject.code);
+    response.send("The read failed: " + errorObject.code);
+  });
+});
