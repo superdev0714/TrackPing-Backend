@@ -131,12 +131,15 @@ exports.getFollowingRequests = functions.https.onRequest((request, response) => 
               if (profile != undefined) {
                 userName = profile['name']
               }
-              let follower = {
-                userId: userId,
-                userName: userName,
-                status: followers[followerId]
-              }
-              arrResult.push(follower)
+              let status = followers[followerId]
+              if (status.accepted == false && status.accepted == false) {
+                let follower = {
+                  userId: userId,
+                  userName: userName,
+                  status: followers[followerId]
+                }
+                arrResult.push(follower)
+              }              
             }
           });
         }
