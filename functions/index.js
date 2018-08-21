@@ -7,6 +7,9 @@ admin.initializeApp();
 var db = admin.database();
 var usersRef = db.ref('/users');
 
+/**
+ * fetach near people.
+ */
 exports.fetchNearPeople = functions.https.onRequest((request, response) => {
   const myUserId = request.query.user_id;
   const myDeviceId = request.query.device_id;
@@ -67,6 +70,9 @@ exports.fetchNearPeople = functions.https.onRequest((request, response) => {
   });
 });
 
+/**
+ * send invite notification
+ */
 exports.sendInviteNotification = functions.https.onRequest((request, response) => {
   const fromId = request.query.fromId;
   const toId = request.query.toId;
@@ -113,6 +119,11 @@ exports.sendInviteNotification = functions.https.onRequest((request, response) =
   });
 });
 
+
+/**
+ * Get Following requests
+ * 
+ */
 exports.getFollowingRequests = functions.https.onRequest((request, response) => {
   const myUserId = request.query.userId
 
