@@ -29,7 +29,7 @@ exports.fetchNearPeople = functions.https.onRequest((request, response) => {
       if (myUserId != userId) {
         let userData = allData[userId]
         Object.keys(userData).forEach(function(deviceId) {
-          if (deviceId != 'profile' && deviceId != 'followers') {
+          if (deviceId != 'profile' && deviceId != 'followings') {
             let deviceInfo = userData[deviceId]
             let currentLocation = deviceInfo['currentLocation']
             if (currentLocation != undefined) {
@@ -40,11 +40,11 @@ exports.fetchNearPeople = functions.https.onRequest((request, response) => {
     
               if (distance <= radius) {
                 var isFollowing = null
-                let followers = allData[myUserId]['followers']
-                if (followers) {
-                  Object.keys(followers).forEach(function(followerId) {
-                    if (followerId == userId) {
-                      isFollowing = followers[followerId]
+                let followings = allData[myUserId]['followings']
+                if (followings) {
+                  Object.keys(followings).forEach(function(followingId) {
+                    if (followingId == userId) {
+                      isFollowing = followings[followingId]
                     }
                   });
                 }
@@ -87,9 +87,8 @@ exports.sendInviteNotification = functions.https.onRequest((request, response) =
     
     let senderName = sender['profile']['name']
     
-    var arrResult = []
     Object.keys(receiver).forEach(function(deviceId) {
-      if (deviceId != 'profile' && deviceId != 'followers') {
+      if (deviceId != 'profile' && deviceId != 'followings') {
         let deviceInfo = receiver[deviceId]
         let fcmToken = deviceInfo['fcmToken']
         registrationTokens.push(fcmToken)
@@ -133,23 +132,23 @@ exports.getFollowingRequests = functions.https.onRequest((request, response) => 
     var arrResult = []
     Object.keys(allData).forEach(function(userId) {
       if (myUserId != userId) {
-        let followers = allData[userId]['followers']
-        if (followers != undefined) {
-          Object.keys(followers).forEach(function(followerId) {
-            if (followerId == myUserId) {
+        let followings = allData[userId]['followings']
+        if (followings != undefined) {
+          Object.keys(followings).forEach(function(followingId) {
+            if (followingId == myUserId) {
               let profile = allData[userId]['profile']
               let userName = ''
               if (profile != undefined) {
                 userName = profile['name']
               }
-              let status = followers[followerId]
+              let status = followings[followingId]
               if (status.accepted == false && status.accepted == false) {
-                let follower = {
+                let following = {
                   userId: userId,
                   userName: userName,
-                  status: followers[followerId]
+                  status: followings[followingId]
                 }
-                arrResult.push(follower)
+                arrResult.push(following)
               }              
             }
           });
