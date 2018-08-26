@@ -29,7 +29,7 @@ exports.fetchNearPeople = functions.https.onRequest((request, response) => {
       if (myUserId != userId) {
         let userData = allData[userId]
         Object.keys(userData).forEach(function(deviceId) {
-          if (deviceId != 'profile' && deviceId != 'followings') {
+          if (deviceId != 'profile' && deviceId != 'followings' && deviceId != 'followers') {
             let deviceInfo = userData[deviceId]
             let currentLocation = deviceInfo['currentLocation']
             if (currentLocation != undefined) {
@@ -39,12 +39,12 @@ exports.fetchNearPeople = functions.https.onRequest((request, response) => {
               var distance = turf.distance(myLocation, to, options);
     
               if (distance <= radius) {
-                var isFollowing = null
-                let followings = allData[myUserId]['followings']
-                if (followings) {
-                  Object.keys(followings).forEach(function(followingId) {
-                    if (followingId == userId) {
-                      isFollowing = followings[followingId]
+                var isFollower = null
+                let followers = allData[myUserId]['followers']
+                if (followers) {
+                  Object.keys(followers).forEach(function(followerId) {
+                    if (followerId == userId) {
+                      isFollower = followers[followerId]
                     }
                   });
                 }
@@ -52,7 +52,7 @@ exports.fetchNearPeople = functions.https.onRequest((request, response) => {
                 let userInfo = {
                   userId: userId,
                   profile: userData["profile"],                  
-                  isFollowing: isFollowing
+                  isFollower: isFollower
                 }    
                 arrResult.push(userInfo);
               }            
@@ -73,7 +73,7 @@ exports.fetchNearPeople = functions.https.onRequest((request, response) => {
 /**
  * send invite notification
  */
-exports.sendInviteNotification = functions.https.onRequest((request, response) => {
+exports.sendFollowInviteNotification = functions.https.onRequest((request, response) => {
   const fromId = request.query.fromId;
   const toId = request.query.toId;
 
@@ -88,7 +88,7 @@ exports.sendInviteNotification = functions.https.onRequest((request, response) =
     let senderName = sender['profile']['name']
     
     Object.keys(receiver).forEach(function(deviceId) {
-      if (deviceId != 'profile' && deviceId != 'followings') {
+      if (deviceId != 'profile' && deviceId != 'followings' && deviceId != 'followers') {
         let deviceInfo = receiver[deviceId]
         let fcmToken = deviceInfo['fcmToken']
         registrationTokens.push(fcmToken)
@@ -107,6 +107,16 @@ exports.sendInviteNotification = functions.https.onRequest((request, response) =
 
     admin.messaging().sendToDevice(registrationTokens, payload).then(function(res) {
       console.log('Successfully sent message:', res);
+      usersRef.child(fromId).child('followers').child(toId).set({
+        accepted: false,
+        declined: false
+      });
+
+      usersRef.child(toId).child('followings').child(fromId).set({
+        accepted: false,
+        declined: false
+      });
+
       response.json({ result: 'success' });
     }).catch(function(error) {
       console.log('Error sending message:', error);
@@ -123,43 +133,43 @@ exports.sendInviteNotification = functions.https.onRequest((request, response) =
  * Get Following requests
  * 
  */
-exports.getFollowingRequests = functions.https.onRequest((request, response) => {
-  const myUserId = request.query.userId
+// exports.getFollowingRequests = functions.https.onRequest((request, response) => {
+//   const myUserId = request.query.userId
 
-  usersRef.once('value', function(snapshot) {
-    let allData = snapshot.val();
+//   usersRef.once('value', function(snapshot) {
+//     let allData = snapshot.val();
 
-    var arrResult = []
-    Object.keys(allData).forEach(function(userId) {
-      if (myUserId != userId) {
-        let followings = allData[userId]['followings']
-        if (followings != undefined) {
-          Object.keys(followings).forEach(function(followingId) {
-            if (followingId == myUserId) {
-              let profile = allData[userId]['profile']
-              let userName = ''
-              if (profile != undefined) {
-                userName = profile['name']
-              }
-              let status = followings[followingId]
-              if (status.accepted == false && status.accepted == false) {
-                let following = {
-                  userId: userId,
-                  userName: userName,
-                  status: followings[followingId]
-                }
-                arrResult.push(following)
-              }              
-            }
-          });
-        }
-      }
-    });
+//     var arrResult = []
+//     Object.keys(allData).forEach(function(userId) {
+//       if (myUserId != userId) {
+//         let followings = allData[userId]['followings']
+//         if (followings != undefined) {
+//           Object.keys(followings).forEach(function(followingId) {
+//             if (followingId == myUserId) {
+//               let profile = allData[userId]['profile']
+//               let userName = ''
+//               if (profile != undefined) {
+//                 userName = profile['name']
+//               }
+//               let status = followings[followingId]
+//               if (status.accepted == false && status.accepted == false) {
+//                 let following = {
+//                   userId: userId,
+//                   userName: userName,
+//                   status: followings[followingId]
+//                 }
+//                 arrResult.push(following)
+//               }              
+//             }
+//           });
+//         }
+//       }
+//     });
 
-    response.json({ result: arrResult });
+//     response.json({ result: arrResult });
     
-  }, function(errorObject) {
-    console.log("The read failed: " + errorObject.code);
-    response.send("The read failed: " + errorObject.code);
-  });
-});
+//   }, function(errorObject) {
+//     console.log("The read failed: " + errorObject.code);
+//     response.send("The read failed: " + errorObject.code);
+//   });
+// });
