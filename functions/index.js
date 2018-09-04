@@ -18,7 +18,7 @@ exports.fetchNearPeople = functions.https.onRequest((request, response) => {
   usersRef.once('value', function(snapshot) {
     let allData = snapshot.val();
 
-    let current_location = allData[myUserId][myDeviceId].currentLocation;
+    let current_location = allData[myUserId]['devices'][myDeviceId].currentLocation;
     
     let myLat = current_location.latitude;
     let myLong = current_location.longitude;
@@ -27,36 +27,35 @@ exports.fetchNearPeople = functions.https.onRequest((request, response) => {
     var arrResult = []
     Object.keys(allData).forEach(function(userId) {
       if (myUserId != userId) {
-        let userData = allData[userId]
-        Object.keys(userData).forEach(function(deviceId) {
-          if (deviceId != 'profile' && deviceId != 'followings' && deviceId != 'followers') {
-            let deviceInfo = userData[deviceId]
-            let currentLocation = deviceInfo['currentLocation']
-            if (currentLocation != undefined) {
-              var to = turf.point([currentLocation.latitude, currentLocation.longitude]);
-              var options = {units: 'kilometers'}
-    
-              var distance = turf.distance(myLocation, to, options);
-    
-              if (distance <= radius) {
-                var isFollower = null
-                let followers = allData[myUserId]['followers']
-                if (followers) {
-                  Object.keys(followers).forEach(function(followerId) {
-                    if (followerId == userId) {
-                      isFollower = followers[followerId]
-                    }
-                  });
-                }
-                
-                let userInfo = {
-                  userId: userId,
-                  profile: userData["profile"],                  
-                  isFollower: isFollower
-                }    
-                arrResult.push(userInfo);
-              }            
-            }
+        let devices = allData[userId]["devices"];
+        
+        Object.keys(devices).forEach(function(deviceId) {
+          let deviceInfo = devices[deviceId]
+          let currentLocation = deviceInfo['currentLocation']
+          if (currentLocation != undefined) {
+            var to = turf.point([currentLocation.latitude, currentLocation.longitude]);
+            var options = {units: 'kilometers'}
+  
+            var distance = turf.distance(myLocation, to, options);
+  
+            if (distance <= radius) {
+              var isFollower = null
+              let followers = allData[myUserId]['followers']
+              if (followers) {
+                Object.keys(followers).forEach(function(followerId) {
+                  if (followerId == userId) {
+                    isFollower = followers[followerId]
+                  }
+                });
+              }
+              
+              let userInfo = {
+                userId: userId,
+                profile: allData[userId]["profile"],                  
+                isFollower: isFollower
+              }    
+              arrResult.push(userInfo);
+            }            
           }
         });
       }
@@ -87,12 +86,11 @@ exports.sendFollowInviteNotification = functions.https.onRequest((request, respo
     
     let senderName = sender['profile']['name']
     
-    Object.keys(receiver).forEach(function(deviceId) {
-      if (deviceId != 'profile' && deviceId != 'followings' && deviceId != 'followers') {
-        let deviceInfo = receiver[deviceId]
-        let fcmToken = deviceInfo['fcmToken']
-        registrationTokens.push(fcmToken)
-      }
+    let receiverDevices = receiver['devices'];
+    Object.keys(receiverDevices).forEach(function(deviceId) {
+      let deviceInfo = receiverDevices[deviceId]
+      let fcmToken = deviceInfo['fcmToken']
+      registrationTokens.push(fcmToken)
     });
 
     var payload = {
